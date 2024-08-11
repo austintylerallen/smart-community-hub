@@ -2,7 +2,7 @@ const Post = require('../models/Post');
 
 exports.getPosts = async (req, res) => {
   try {
-    const posts = await Post.find().sort({ createdAt: -1 }).populate('creator', 'name');
+    const posts = await Post.find().sort({ createdAt: -1 }).populate('creator', 'name profilePicture').populate('likes', 'name');
     console.log('Fetched posts from database:', posts); // Log fetched posts from database
     res.status(200).json(posts);
   } catch (error) {
@@ -49,6 +49,46 @@ exports.deletePost = async (req, res) => {
     await post.remove();
     res.status(200).json({ message: 'Post deleted' });
   } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.likePost = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const post = await Post.findById(id);
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    if (!post.likes.includes(req.userId)) {
+      post.likes.push(req.userId);
+      await post.save();
+    }
+
+    res.status(200).json(post);
+  } catch (error) {
+    console.error('Error liking post:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.unlikePost = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const post = await Post.findById(id);
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    post.likes = post.likes.filter(userId => userId.toString() !== req.userId);
+    await post.save();
+
+    res.status(200).json(post);
+  } catch (error) {
+    console.error('Error unliking post:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

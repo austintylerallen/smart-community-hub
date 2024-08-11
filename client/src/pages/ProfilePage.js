@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, TextField, Button, Avatar, Box } from '@mui/material';
+import { Container, Typography, TextField, Button, Avatar, Box, IconButton, Badge, List, ListItem, ListItemText } from '@mui/material';
 import axios from 'axios';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
+import { PersonAdd, Check, Close, Notifications } from '@mui/icons-material';
 
 const ProfilePage = () => {
   const [user, setUser] = useState({});
@@ -10,6 +10,7 @@ const ProfilePage = () => {
   const [location, setLocation] = useState('');
   const [bio, setBio] = useState('');
   const [profilePicture, setProfilePicture] = useState(null);
+  const [friendRequests, setFriendRequests] = useState([]);
 
   const refreshToken = async () => {
     const token = localStorage.getItem('refreshToken');
@@ -39,6 +40,7 @@ const ProfilePage = () => {
       setLocation(response.data.location || '');
       setBio(response.data.bio || '');
       setProfilePicture(response.data.profilePicture || '');
+      setFriendRequests(response.data.friendRequests || []);
     } catch (error) {
       if (error.response && error.response.status === 401 && error.response.data.message === 'Authentication failed: Invalid token') {
         token = await refreshToken();
@@ -50,6 +52,7 @@ const ProfilePage = () => {
           setName(response.data.name || '');
           setLocation(response.data.location || '');
           setBio(response.data.bio || '');
+          setFriendRequests(response.data.friendRequests || []);
         } else {
           toast.error('Session expired. Please log in again.');
           window.location.href = '/login';
@@ -101,9 +104,49 @@ const ProfilePage = () => {
     }
   };
 
+  const handleSendFriendRequest = async (recipientId) => {
+    let token = localStorage.getItem('token');
+    try {
+      await axios.post('http://localhost:4001/api/friends/send', { recipientId }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Friend request sent successfully');
+    } catch (error) {
+      console.error('Error sending friend request:', error);
+      toast.error(`Failed to send friend request: ${error.response ? error.response.data.message : error.message}`);
+    }
+  };
+
+  const handleAcceptFriendRequest = async (requesterId) => {
+    let token = localStorage.getItem('token');
+    try {
+      await axios.post('http://localhost:4001/api/friends/accept', { requesterId }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchUserData();
+      toast.success('Friend request accepted successfully');
+    } catch (error) {
+      console.error('Error accepting friend request:', error);
+      toast.error(`Failed to accept friend request: ${error.response ? error.response.data.message : error.message}`);
+    }
+  };
+
+  const handleDeclineFriendRequest = async (requesterId) => {
+    let token = localStorage.getItem('token');
+    try {
+      await axios.post('http://localhost:4001/api/friends/decline', { requesterId }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchUserData();
+      toast.success('Friend request declined successfully');
+    } catch (error) {
+      console.error('Error declining friend request:', error);
+      toast.error(`Failed to decline friend request: ${error.response ? error.response.data.message : error.message}`);
+    }
+  };
+
   return (
     <Container>
-      <ToastContainer />
       <Typography variant="h3" component="h1" gutterBottom>
         Profile
       </Typography>
@@ -156,6 +199,25 @@ const ProfilePage = () => {
       <Button onClick={handleUpdate} variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
         Update Profile
       </Button>
+
+      <Box mt={4}>
+        <Typography variant="h5" component="h2" gutterBottom>
+          Friend Requests
+        </Typography>
+        <List>
+          {friendRequests.map((request) => (
+            <ListItem key={request._id}>
+              <ListItemText primary={request.requester.name} secondary={request.requester.email} />
+              <IconButton onClick={() => handleAcceptFriendRequest(request.requester._id)}>
+                <Check />
+              </IconButton>
+              <IconButton onClick={() => handleDeclineFriendRequest(request.requester._id)}>
+                <Close />
+              </IconButton>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
     </Container>
   );
 };
