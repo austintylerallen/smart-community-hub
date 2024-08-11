@@ -1,3 +1,4 @@
+// server.js or index.js
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -12,8 +13,8 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: 'http://localhost:3000',
-    methods: ['GET', 'POST']
-  }
+    methods: ['GET', 'POST'],
+  },
 });
 
 app.use(cors());
@@ -23,8 +24,8 @@ mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('MongoDB connected'))
-.catch((err) => console.log(err));
+  .then(() => console.log('MongoDB connected'))
+  .catch((err) => console.log(err));
 
 // Attach io to the request object
 app.use((req, res, next) => {
@@ -39,6 +40,10 @@ app.use('/api/auth', authRoutes);
 // Use the newsfeed routes
 const newsfeedRoutes = require('./routes/newsfeed');
 app.use('/api/newsfeed', newsfeedRoutes);
+
+// Use the post routes
+const postRoutes = require('./routes/posts');
+app.use('/api/posts', postRoutes);
 
 io.on('connection', (socket) => {
   console.log('a user connected');
