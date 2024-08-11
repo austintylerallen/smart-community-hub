@@ -5,10 +5,9 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   name: { type: String },
-  role: { type: String, default: 'user' },
+  location: { type: String },
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  friendRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  location: { type: String }, // Ensure this is a string
+  createdAt: { type: Date, default: Date.now },
   refreshToken: { type: String }
 });
 

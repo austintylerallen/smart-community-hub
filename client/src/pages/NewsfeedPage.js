@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Typography, List, ListItem, ListItemText, Divider, Paper } from '@mui/material';
+import { Container, Typography, List, ListItem, ListItemText, Divider, Paper, Box, Card, CardContent, Avatar, IconButton } from '@mui/material';
 import axios from 'axios';
+import { Favorite, Comment } from '@mui/icons-material';
 
 const NewsfeedPage = () => {
   const [posts, setPosts] = useState([]);
@@ -15,7 +16,7 @@ const NewsfeedPage = () => {
     try {
       const response = await axios.post('http://localhost:4001/api/auth/refresh-token', { token });
       const newAccessToken = response.data.accessToken;
-      localStorage.setItem('accessToken', newAccessToken);
+      localStorage.setItem('token', newAccessToken);
       return newAccessToken;
     } catch (error) {
       console.error('Refresh token error:', error);
@@ -24,7 +25,7 @@ const NewsfeedPage = () => {
   };
 
   const fetchNewsfeed = async () => {
-    let token = localStorage.getItem('accessToken');
+    let token = localStorage.getItem('token');
     try {
       const response = await axios.get('http://localhost:4001/api/newsfeed', {
         headers: { Authorization: `Bearer ${token}` }
@@ -60,27 +61,49 @@ const NewsfeedPage = () => {
       <Typography variant="h3" component="h1" gutterBottom>
         Newsfeed
       </Typography>
-      <Typography variant="h4" component="h2" gutterBottom>
-        Events Near You
-      </Typography>
-      <List component={Paper}>
-        {events.map((event) => (
-          <ListItem key={event._id}>
-            <ListItemText primary={event.title} secondary={`${new Date(event.date).toLocaleString()} - ${event.location}`} />
-          </ListItem>
-        ))}
-      </List>
-      <Divider sx={{ my: 2 }} />
-      <Typography variant="h4" component="h2" gutterBottom>
-        Posts
-      </Typography>
-      <List component={Paper}>
-        {posts.map((post) => (
-          <ListItem key={post._id}>
-            <ListItemText primary={post.content} secondary={`By ${post.creator.name} at ${new Date(post.createdAt).toLocaleString()}`} />
-          </ListItem>
-        ))}
-      </List>
+      <Box display="flex" justifyContent="space-between">
+        <Box flex={1} mr={2}>
+          <Typography variant="h4" component="h2" gutterBottom>
+            Events Near You
+          </Typography>
+          <Paper elevation={3}>
+            <List>
+              {events.map((event) => (
+                <ListItem key={event._id}>
+                  <ListItemText primary={event.title} secondary={`${new Date(event.date).toLocaleString()} - ${event.location}`} />
+                </ListItem>
+              ))}
+            </List>
+          </Paper>
+        </Box>
+        <Box flex={2}>
+          <Typography variant="h4" component="h2" gutterBottom>
+            Posts
+          </Typography>
+          {posts.map((post) => (
+            <Card key={post._id} variant="outlined" sx={{ mb: 2 }}>
+              <CardContent>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <Avatar sx={{ mr: 2 }}>{post.creator.name[0]}</Avatar>
+                  <Typography variant="body1">{post.creator.name}</Typography>
+                </Box>
+                <Typography variant="body1" mb={2}>{post.content}</Typography>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="body2" color="textSecondary">{new Date(post.createdAt).toLocaleString()}</Typography>
+                  <Box>
+                    <IconButton>
+                      <Favorite />
+                    </IconButton>
+                    <IconButton>
+                      <Comment />
+                    </IconButton>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
+      </Box>
     </Container>
   );
 };

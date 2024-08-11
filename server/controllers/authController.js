@@ -2,16 +2,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-const generateAccessToken = (user) => {
-  return jwt.sign({ email: user.email, id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-};
-
-const generateRefreshToken = (user) => {
-  return jwt.sign({ email: user.email, id: user._id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
-};
-
 // Register a new user
-const registerUser = async (req, res) => {
+exports.registerUser = async (req, res) => {
   const { email, password, name, location, role } = req.body;
 
   try {
@@ -31,7 +23,7 @@ const registerUser = async (req, res) => {
 };
 
 // Log in an existing user
-const loginUser = async (req, res) => {
+exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -45,8 +37,8 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    const accessToken = generateAccessToken(existingUser);
-    const refreshToken = generateRefreshToken(existingUser);
+    const accessToken = jwt.sign({ email: existingUser.email, id: existingUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const refreshToken = jwt.sign({ email: existingUser.email, id: existingUser._id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
 
     existingUser.refreshToken = refreshToken;
     await existingUser.save();
@@ -58,32 +50,40 @@ const loginUser = async (req, res) => {
   }
 };
 
-// Refresh Access Token
-const refreshToken = async (req, res) => {
-  const { token } = req.body;
-
-  if (!token) return res.status(401).json({ message: 'Authentication failed: No token provided' });
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-    const user = await User.findById(decoded.id);
-
-    if (!user || user.refreshToken !== token) {
-      return res.status(403).json({ message: 'Authentication failed: Invalid token' });
+exports.refreshToken = async (req, res) => {
+    const { token } = req.body;
+  
+    if (!token) {
+      console.log('No token provided');
+      return res.status(401).json({ message: 'Authentication failed: No token provided' });
     }
-
-    const newAccessToken = generateAccessToken(user);
-    res.status(200).json({ accessToken: newAccessToken });
-  } catch (error) {
-    console.error('Refresh token error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+  
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+      console.log('Decoded refresh token:', decoded);
+  
+      const user = await User.findById(decoded.id);
+      if (!user || user.refreshToken !== token) {
+        console.log('Invalid token or user not found');
+        return res.status(403).json({ message: 'Authentication failed: Invalid token' });
+      }
+  
+      const newAccessToken = jwt.sign({ email: user.email, id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      res.status(200).json({ accessToken: newAccessToken });
+    } catch (error) {
+      console.error('Refresh token error:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  };
 
 // Get the currently logged-in user's data
-const getUser = async (req, res) => {
+exports.getUser = async (req, res) => {
   try {
+    console.log('Fetching user data for ID:', req.userId);  // Add this line
     const user = await User.findById(req.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
     res.status(200).json(user);
   } catch (error) {
     console.error('Get user error:', error);
@@ -92,15 +92,23 @@ const getUser = async (req, res) => {
 };
 
 // Update the currently logged-in user's data
-const updateUser = async (req, res) => {
+exports.updateUser = async (req, res) => {
   const { email, name, location } = req.body;
+  console.log('Update request:', { email, name, location });
 
   try {
+    console.log('Updating user with ID:', req.userId);  // Add this line
     const updatedUser = await User.findByIdAndUpdate(
       req.userId,
       { email, name, location },
       { new: true, runValidators: true }
     ).select('-password');
+    
+    if (!updatedUser) {
+      console.error('User not found during update');
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     res.status(200).json(updatedUser);
   } catch (error) {
     console.error('Update user error:', error);
@@ -108,10 +116,28 @@ const updateUser = async (req, res) => {
   }
 };
 
-module.exports = {
-  registerUser,
-  loginUser,
-  refreshToken,
-  getUser,
-  updateUser,
-};
+
+
+exports.updateUser = async (req, res) => {
+    const { email, name, location } = req.body;
+    console.log('Update request received:', { email, name, location });
+    console.log('User ID from token:', req.userId);
+  
+    try {
+      const updatedUser = await User.findByIdAndUpdate(
+        req.userId,
+        { email, name, location },
+        { new: true, runValidators: true }
+      ).select('-password');
+  
+      if (!updatedUser) {
+        console.error('User not found during update');
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      res.status(200).json(updatedUser);
+    } catch (error) {
+      console.error('Update user error:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  };

@@ -10,10 +10,10 @@ import store from './redux/store';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#1976d2',
+      main: '#00796b', // Teal
     },
     secondary: {
-      main: '#dc004e',
+      main: '#004d40', // Dark Teal
     },
   },
 });

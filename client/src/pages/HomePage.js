@@ -1,23 +1,16 @@
 import React from 'react';
-import { Typography, Button } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Container, Typography } from '@mui/material';
 
 const HomePage = () => {
   return (
-    <div>
+    <Container>
       <Typography variant="h3" component="h1" gutterBottom>
-        Welcome to the Smart Community Hub
+        Welcome to Smart Community Hub
       </Typography>
       <Typography variant="body1">
-        This is the homepage. More features coming soon!
+        This is the home page. Use the navigation bar to explore the site.
       </Typography>
-      <Button variant="contained" color="primary" component={Link} to="/login">
-        Login
-      </Button>
-      <Button variant="contained" color="secondary" component={Link} to="/register">
-        Register
-      </Button>
-    </div>
+    </Container>
   );
 };
 

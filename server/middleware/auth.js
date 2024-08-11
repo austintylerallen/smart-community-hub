@@ -18,11 +18,12 @@ const auth = (req, res, next) => {
 
     const decodedData = jwt.verify(token, process.env.JWT_SECRET);
     req.userId = decodedData.id;
+    console.log('Decoded user ID:', decodedData.id);
 
     next();
   } catch (error) {
     console.error('Authentication error:', error);
-    res.status(500).json({ message: 'Authentication failed: Invalid token' });
+    res.status(401).json({ message: 'Authentication failed: Invalid token' });
   }
 };
 

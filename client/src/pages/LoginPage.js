@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Container, Typography, TextField, Button } from '@mui/material';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
-const LoginPage = () => {
+const LoginPage = ({ setAuth }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -12,7 +14,8 @@ const LoginPage = () => {
       const response = await axios.post('http://localhost:4001/api/auth/login', { email, password });
       localStorage.setItem('accessToken', response.data.accessToken);
       localStorage.setItem('refreshToken', response.data.refreshToken);
-      window.location.href = '/newsfeed';
+      setAuth(true); // Update the authentication state
+      navigate('/newsfeed'); // Redirect to newsfeed
     } catch (error) {
       console.error('Login error:', error);
       alert('Login failed: ' + (error.response?.data?.message || error.message));
