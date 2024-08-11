@@ -6,6 +6,8 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import App from './App';
 import store from './redux/store';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const theme = createTheme({
   palette: {
@@ -27,6 +29,7 @@ root.render(
       <CssBaseline />
       <Router>
         <App />
+        <ToastContainer />
       </Router>
     </ThemeProvider>
   </Provider>

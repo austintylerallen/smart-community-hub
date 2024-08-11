@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, TextField, Button, Paper } from '@mui/material';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const CreatePost = ({ fetchNewsfeed }) => {
   const [content, setContent] = useState('');
@@ -14,9 +15,11 @@ const CreatePost = ({ fetchNewsfeed }) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setContent('');
-      fetchNewsfeed();
+      fetchNewsfeed();  // Refresh the newsfeed after posting
+      toast.success('Post created successfully');
     } catch (error) {
       console.error('Error creating post:', error);
+      toast.error('Failed to create post');
     }
   };
 

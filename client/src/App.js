@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Route, Routes } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import NewsfeedPage from './pages/NewsfeedPage';
@@ -9,28 +7,16 @@ import ProfilePage from './pages/ProfilePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#00796b', // Teal
-    },
-    secondary: {
-      main: '#004d40', // Dark Teal
-    },
-  },
-});
-
 const App = () => {
   const [isAuth, setAuth] = useState(false);
 
   useEffect(() => {
-    const accessToken = localStorage.getItem('token');
+    const accessToken = localStorage.getItem('accessToken');
     setAuth(!!accessToken);
   }, []);
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <div>
       <Navbar isAuth={isAuth} setAuth={setAuth} />
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -39,7 +25,7 @@ const App = () => {
         <Route path="/login" element={<LoginPage setAuth={setAuth} />} />
         <Route path="/register" element={<RegisterPage setAuth={setAuth} />} />
       </Routes>
-    </ThemeProvider>
+    </div>
   );
 };
 

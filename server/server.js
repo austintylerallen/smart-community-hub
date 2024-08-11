@@ -4,11 +4,15 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const http = require('http');
 const { Server } = require('socket.io');
-const commentRoutes = require('./routes/comments');
-
-
+const cloudinary = require('cloudinary').v2;
 
 dotenv.config();
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
+});
 
 const app = express();
 const server = http.createServer(app);
@@ -21,6 +25,7 @@ const io = new Server(server, {
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
@@ -34,22 +39,16 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/api/comments', commentRoutes);
-
-// Use the auth routes
 const authRoutes = require('./routes/auth');
-app.use('/api/auth', authRoutes);
-
-// Use the newsfeed routes
-const newsfeedRoutes = require('./routes/newsfeed');
-app.use('/api/newsfeed', newsfeedRoutes);
-
-// Use the posts routes
+const userRoutes = require('./routes/user');
 const postsRoutes = require('./routes/posts');
-app.use('/api/posts', postsRoutes);
-
-// Use the comments routes
+const newsfeedRoutes = require('./routes/newsfeed');
 const commentsRoutes = require('./routes/comments');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/posts', postsRoutes);
+app.use('/api/newsfeed', newsfeedRoutes);
 app.use('/api/comments', commentsRoutes);
 
 io.on('connection', (socket) => {

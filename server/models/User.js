@@ -5,10 +5,13 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   name: { type: String },
-  location: { type: String },
+  role: { type: String, default: 'user' },
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  createdAt: { type: Date, default: Date.now },
-  refreshToken: { type: String }
+  friendRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  location: { type: String },
+  refreshToken: { type: String },
+  bio: { type: String },
+  profilePicture: { type: String }
 });
 
 userSchema.pre('save', async function (next) {
