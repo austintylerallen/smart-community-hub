@@ -3,6 +3,9 @@ import { Container, Typography, TextField, Button, Avatar, Box, IconButton, Badg
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { PersonAdd, Check, Close, Notifications } from '@mui/icons-material';
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:4001');
 
 const ProfilePage = () => {
   const [user, setUser] = useState({});
@@ -11,6 +14,7 @@ const ProfilePage = () => {
   const [bio, setBio] = useState('');
   const [profilePicture, setProfilePicture] = useState(null);
   const [friendRequests, setFriendRequests] = useState([]);
+  const [notifications, setNotifications] = useState([]);
 
   const refreshToken = async () => {
     const token = localStorage.getItem('refreshToken');
@@ -64,8 +68,43 @@ const ProfilePage = () => {
     }
   };
 
+  const fetchNotifications = async () => {
+    let token = localStorage.getItem('token');
+    try {
+      const response = await axios.get('http://localhost:4001/api/notifications', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNotifications(response.data);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      toast.error(`Error fetching notifications: ${error.response ? error.response.data.message : error.message}`);
+    }
+  };
+
   useEffect(() => {
     fetchUserData();
+    fetchNotifications();
+
+    socket.on('friendRequestReceived', (data) => {
+      fetchUserData();
+      toast.info(`You have a new friend request from ${data.requesterId}`);
+    });
+
+    socket.on('postLiked', (data) => {
+      fetchNotifications();
+      toast.info(`Your post was liked by ${data.likerId}`);
+    });
+
+    socket.on('postCommented', (data) => {
+      fetchNotifications();
+      toast.info(`Your post was commented on by ${data.commenterId}`);
+    });
+
+    return () => {
+      socket.off('friendRequestReceived');
+      socket.off('postLiked');
+      socket.off('postCommented');
+    };
   }, []);
 
   const handleUpdate = async () => {
@@ -110,6 +149,7 @@ const ProfilePage = () => {
       await axios.post('http://localhost:4001/api/friends/send', { recipientId }, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      socket.emit('sendFriendRequest', { recipientId, requesterId: user._id });
       toast.success('Friend request sent successfully');
     } catch (error) {
       console.error('Error sending friend request:', error);
@@ -214,6 +254,20 @@ const ProfilePage = () => {
               <IconButton onClick={() => handleDeclineFriendRequest(request.requester._id)}>
                 <Close />
               </IconButton>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+
+      <Box mt={4}>
+        <Typography variant="h5" component="h2" gutterBottom>
+          Notifications
+        </Typography>
+        <List>
+          {notifications.map((notification) => (
+            <ListItem key={notification._id}>
+              <ListItemText primary={notification.message} secondary={new Date(notification.createdAt).toLocaleString()} />
+              {!notification.read && <Badge color="secondary" variant="dot" />}
             </ListItem>
           ))}
         </List>

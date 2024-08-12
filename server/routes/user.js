@@ -26,5 +26,7 @@ const auth = require('../middleware/auth');
 
 router.get('/me', auth, getUser);
 router.put('/me', auth, parser.single('profilePicture'), updateUser);
+// router.get('/friends', auth, getUserFriends);
+
 
 module.exports = router;

@@ -4,7 +4,8 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const http = require('http');
 const { Server } = require('socket.io');
-const commentRoutes = require('./routes/comments');
+const User = require('./models/User');
+const Notification = require('./models/Notification');
 
 dotenv.config();
 
@@ -32,34 +33,74 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/api/comments', commentRoutes);
-
-// Use the auth routes
-const authRoutes = require('./routes/auth');
-app.use('/api/auth', authRoutes);
-
-// Use the newsfeed routes
-const newsfeedRoutes = require('./routes/newsfeed');
-app.use('/api/newsfeed', newsfeedRoutes);
-
-// Use the posts routes
-const postsRoutes = require('./routes/posts');
-app.use('/api/posts', postsRoutes);
-
-// Use the comments routes
-const commentsRoutes = require('./routes/comments');
-app.use('/api/comments', commentsRoutes);
-
-// Use the user routes
-const userRoutes = require('./routes/user');
-app.use('/api/users', userRoutes);
-
-// Use the friend routes
-const friendRoutes = require('./routes/friend');
-app.use('/api/friends', friendRoutes);
+app.use('/api/comments', require('./routes/comments'));
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/newsfeed', require('./routes/newsfeed'));
+app.use('/api/posts', require('./routes/posts'));
+app.use('/api/comments', require('./routes/comments'));
+app.use('/api/users', require('./routes/user'));
+app.use('/api/friends', require('./routes/friend'));
+app.use('/api/notifications', require('./routes/notification'));
 
 io.on('connection', (socket) => {
   console.log('a user connected');
+
+  socket.on('sendFriendRequest', async ({ recipientId, requesterId }) => {
+    try {
+      const recipient = await User.findById(recipientId);
+      if (recipient) {
+        recipient.friendRequests.push({ requester: requesterId });
+        await recipient.save();
+
+        const notification = new Notification({
+          user: recipientId,
+          type: 'friendRequest',
+          message: `You have a new friend request from ${requesterId}`
+        });
+        await notification.save();
+
+        socket.to(recipientId).emit('friendRequestReceived', { requesterId });
+      }
+    } catch (error) {
+      console.error('Error sending friend request:', error);
+    }
+  });
+
+  socket.on('likePost', async ({ postId, likerId }) => {
+    try {
+      const post = await Post.findById(postId).populate('creator');
+      if (post) {
+        const notification = new Notification({
+          user: post.creator._id,
+          type: 'like',
+          message: `${likerId} liked your post`
+        });
+        await notification.save();
+
+        socket.to(post.creator._id.toString()).emit('postLiked', { postId, likerId });
+      }
+    } catch (error) {
+      console.error('Error liking post:', error);
+    }
+  });
+
+  socket.on('commentPost', async ({ postId, commenterId }) => {
+    try {
+      const post = await Post.findById(postId).populate('creator');
+      if (post) {
+        const notification = new Notification({
+          user: post.creator._id,
+          type: 'comment',
+          message: `${commenterId} commented on your post`
+        });
+        await notification.save();
+
+        socket.to(post.creator._id.toString()).emit('postCommented', { postId, commenterId });
+      }
+    } catch (error) {
+      console.error('Error commenting on post:', error);
+    }
+  });
 
   socket.on('disconnect', () => {
     console.log('user disconnected');

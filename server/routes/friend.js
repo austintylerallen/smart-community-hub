@@ -1,3 +1,4 @@
+// routes/friend.js
 const express = require('express');
 const router = express.Router();
 const { sendFriendRequest, acceptFriendRequest, declineFriendRequest, getFriendRequests } = require('../controllers/friendController');
