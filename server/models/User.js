@@ -7,11 +7,12 @@ const userSchema = new mongoose.Schema({
   name: { type: String },
   role: { type: String, default: 'user' },
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  friendRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  friendRequests: [{ requester: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } }],
   location: { type: String },
   refreshToken: { type: String },
   bio: { type: String },
-  profilePicture: { type: String }
+  profilePicture: { type: String },
+  notifications: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Notification' }]
 });
 
 userSchema.pre('save', async function (next) {

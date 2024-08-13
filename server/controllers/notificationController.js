@@ -1,4 +1,5 @@
 const Notification = require('../models/Notification');
+const User = require('../models/User');
 
 exports.getNotifications = async (req, res) => {
   try {
@@ -8,6 +9,7 @@ exports.getNotifications = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 exports.markAsRead = async (req, res) => {
   try {

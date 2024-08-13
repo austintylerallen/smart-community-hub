@@ -1,12 +1,12 @@
-// routes/friend.js
 const express = require('express');
-const router = express.Router();
-const { sendFriendRequest, acceptFriendRequest, declineFriendRequest, getFriendRequests } = require('../controllers/friendController');
+const { sendFriendRequest, acceptFriendRequest, declineFriendRequest, getUsers } = require('../controllers/friendController');
 const auth = require('../middleware/auth');
+
+const router = express.Router();
 
 router.post('/send', auth, sendFriendRequest);
 router.post('/accept', auth, acceptFriendRequest);
 router.post('/decline', auth, declineFriendRequest);
-router.get('/requests', auth, getFriendRequests);
+router.get('/', auth, getUsers);
 
 module.exports = router;

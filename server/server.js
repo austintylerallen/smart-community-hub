@@ -6,6 +6,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const User = require('./models/User');
 const Notification = require('./models/Notification');
+const Post = require('./models/Post');
 
 dotenv.config();
 
@@ -59,7 +60,10 @@ io.on('connection', (socket) => {
         });
         await notification.save();
 
-        socket.to(recipientId).emit('friendRequestReceived', { requesterId });
+        recipient.notifications.push(notification._id);
+        await recipient.save();
+
+        io.to(recipientId).emit('friendRequestReceived', { requesterId });
       }
     } catch (error) {
       console.error('Error sending friend request:', error);
@@ -76,6 +80,9 @@ io.on('connection', (socket) => {
           message: `${likerId} liked your post`
         });
         await notification.save();
+
+        post.creator.notifications.push(notification._id);
+        await post.creator.save();
 
         socket.to(post.creator._id.toString()).emit('postLiked', { postId, likerId });
       }
@@ -94,6 +101,9 @@ io.on('connection', (socket) => {
           message: `${commenterId} commented on your post`
         });
         await notification.save();
+
+        post.creator.notifications.push(notification._id);
+        await post.creator.save();
 
         socket.to(post.creator._id.toString()).emit('postCommented', { postId, commenterId });
       }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Typography, TextField, Button, Avatar, Box, IconButton, Badge, List, ListItem, ListItemText } from '@mui/material';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { PersonAdd, Check, Close, Notifications } from '@mui/icons-material';
+import { Check, Close, PersonAdd } from '@mui/icons-material';
 import { io } from 'socket.io-client';
 
 const socket = io('http://localhost:4001');
@@ -15,6 +15,7 @@ const ProfilePage = () => {
   const [profilePicture, setProfilePicture] = useState(null);
   const [friendRequests, setFriendRequests] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [users, setUsers] = useState([]);
 
   const refreshToken = async () => {
     const token = localStorage.getItem('refreshToken');
@@ -81,9 +82,23 @@ const ProfilePage = () => {
     }
   };
 
+  const fetchUsers = async () => {
+    let token = localStorage.getItem('token');
+    try {
+      const response = await axios.get('http://localhost:4001/api/users', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast.error(`Error fetching users: ${error.response ? error.response.data.message : error.message}`);
+    }
+  };
+
   useEffect(() => {
     fetchUserData();
     fetchNotifications();
+    fetchUsers();
 
     socket.on('friendRequestReceived', (data) => {
       fetchUserData();
@@ -163,7 +178,9 @@ const ProfilePage = () => {
       await axios.post('http://localhost:4001/api/friends/accept', { requesterId }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchUserData();
+      setFriendRequests((prevRequests) =>
+        prevRequests.filter((req) => req.requester._id !== requesterId)
+      );
       toast.success('Friend request accepted successfully');
     } catch (error) {
       console.error('Error accepting friend request:', error);
@@ -177,7 +194,9 @@ const ProfilePage = () => {
       await axios.post('http://localhost:4001/api/friends/decline', { requesterId }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchUserData();
+      setFriendRequests((prevRequests) =>
+        prevRequests.filter((req) => req.requester._id !== requesterId)
+      );
       toast.success('Friend request declined successfully');
     } catch (error) {
       console.error('Error declining friend request:', error);
@@ -247,6 +266,7 @@ const ProfilePage = () => {
         <List>
           {friendRequests.map((request) => (
             <ListItem key={request._id}>
+              <Avatar src={request.requester.profilePicture} sx={{ mr: 2 }} />
               <ListItemText primary={request.requester.name} secondary={request.requester.email} />
               <IconButton onClick={() => handleAcceptFriendRequest(request.requester._id)}>
                 <Check />
@@ -268,6 +288,23 @@ const ProfilePage = () => {
             <ListItem key={notification._id}>
               <ListItemText primary={notification.message} secondary={new Date(notification.createdAt).toLocaleString()} />
               {!notification.read && <Badge color="secondary" variant="dot" />}
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+
+      <Box mt={4}>
+        <Typography variant="h5" component="h2" gutterBottom>
+          Users
+        </Typography>
+        <List>
+          {users.map((user) => (
+            <ListItem key={user._id}>
+              <Avatar src={user.profilePicture} sx={{ mr: 2 }} />
+              <ListItemText primary={user.name} secondary={user.email} />
+              <IconButton onClick={() => handleSendFriendRequest(user._id)}>
+                <PersonAdd />
+              </IconButton>
             </ListItem>
           ))}
         </List>
