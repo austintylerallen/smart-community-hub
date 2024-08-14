@@ -4,9 +4,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const http = require('http');
 const { Server } = require('socket.io');
-const User = require('./models/User');
-const Notification = require('./models/Notification');
-const Post = require('./models/Post');
+const eventRoutes = require('./routes/events'); // Ensure this is correctly imported
 
 dotenv.config();
 
@@ -38,10 +36,10 @@ app.use('/api/comments', require('./routes/comments'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/newsfeed', require('./routes/newsfeed'));
 app.use('/api/posts', require('./routes/posts'));
-app.use('/api/comments', require('./routes/comments'));
 app.use('/api/users', require('./routes/user'));
 app.use('/api/friends', require('./routes/friend'));
 app.use('/api/notifications', require('./routes/notification'));
+app.use('/api/events', eventRoutes); // Register event routes
 
 io.on('connection', (socket) => {
   console.log('a user connected');

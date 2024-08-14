@@ -1,10 +1,8 @@
 const express = require('express');
-const { createEvent, getEvents, getNearbyEvents } = require('../controllers/eventController');
-const auth = require('../middleware/auth');
+const { getEventbriteEvents } = require('../controllers/eventController');
+
 const router = express.Router();
 
-router.post('/', auth, createEvent);
-router.get('/', getEvents);
-router.get('/nearby', getNearbyEvents); // Add this route
+router.get('/eventbrite', getEventbriteEvents); // Ensure this is a GET route
 
 module.exports = router;

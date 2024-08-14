@@ -1,50 +1,52 @@
-import React, { useEffect, useState } from 'react';
-import { Container, Typography, List, ListItem, ListItemText } from '@mui/material';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import GoogleMapComponent from '../components/GoogleMapComponent';
+import { Container, Typography, Button, List, ListItem, ListItemText, CircularProgress, Alert } from '@mui/material';
 
 const EventsPage = () => {
   const [events, setEvents] = useState([]);
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const fetchEvents = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/events/eventbrite`);
+      console.log('Events fetched:', response.data); // Debug: log fetched events
+      setEvents(response.data.events || []);
+    } catch (err) {
+      const errorMsg = err.response ? err.response.data.message : err.message;
+      setError(`Failed to fetch events: ${errorMsg}`);
+      console.error('Error fetching events:', errorMsg); // Debug: log error
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      const response = await axios.get('http://localhost:4001/api/events');
-      setEvents(response.data);
-    };
-
     fetchEvents();
   }, []);
 
   return (
     <Container>
-      <Typography variant="h3" component="h1" gutterBottom>
+      <Typography variant="h4" gutterBottom>
         Events
       </Typography>
-      <List>
-        {events.map((event) => (
-          <ListItem
-            key={event._id}
-            button
-            onClick={() => setSelectedEvent(event)}
-          >
-            <ListItemText primary={event.title} secondary={event.date} />
-          </ListItem>
-        ))}
-      </List>
-      {selectedEvent && (
-        <div>
-          <Typography variant="h4" component="h2" gutterBottom>
-            {selectedEvent.title}
-          </Typography>
-          <Typography variant="body1" gutterBottom>
-            {selectedEvent.description}
-          </Typography>
-          <Typography variant="body1" gutterBottom>
-            Date: {new Date(selectedEvent.date).toLocaleDateString()}
-          </Typography>
-          <GoogleMapComponent destination={selectedEvent.location} />
-        </div>
+      <Button variant="contained" color="primary" onClick={fetchEvents}>
+        Fetch Events
+      </Button>
+      {loading && <CircularProgress />}
+      {error && <Alert severity="error">{error}</Alert>}
+      {events.length > 0 ? (
+        <List>
+          {events.map((event) => (
+            <ListItem key={event.id}>
+              <ListItemText primary={event.name.text} secondary={event.start.local} />
+            </ListItem>
+          ))}
+        </List>
+      ) : (
+        <Typography>No events available</Typography>
       )}
     </Container>
   );

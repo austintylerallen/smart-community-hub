@@ -1,44 +1,25 @@
-const Event = require('../models/Event');
+const axios = require('axios');
 
-exports.createEvent = async (req, res) => {
-  const { title, description, date, location } = req.body;
+// Fetch events from Eventbrite API using the organization ID
+const getEventbriteEvents = async (req, res) => {
+  const organizationId = '2243350764283'; // Your actual organization ID
 
   try {
-    const newEvent = new Event({ title, description, date, location, creator: req.userId });
-    await newEvent.save();
-
-    // Emit new event to all connected clients
-    req.io.emit('newEvent', newEvent);
-
-    res.status(201).json(newEvent);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-exports.getEvents = async (req, res) => {
-  try {
-    const events = await Event.find();
-    res.status(200).json(events);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-exports.getNearbyEvents = async (req, res) => {
-  const { lat, lng } = req.query;
-  
-  try {
-    const events = await Event.find({
-      location: {
-        $near: {
-          $geometry: { type: 'Point', coordinates: [lng, lat] },
-          $maxDistance: 10000 // Distance in meters
-        }
+    const response = await axios.get(`https://www.eventbriteapi.com/v3/organizations/${organizationId}/events/`, {
+      headers: {
+        'Authorization': `Bearer ${process.env.EVENTBRITE_PRIVATE_TOKEN}`
+      },
+      params: {
+        status: 'live'
       }
     });
-    res.status(200).json(events);
+    res.json(response.data);
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error fetching events from Eventbrite:', error.response ? error.response.data : error.message);
+    res.status(500).json({ message: 'Failed to fetch events from Eventbrite' });
   }
+};
+
+module.exports = {
+  getEventbriteEvents,
 };

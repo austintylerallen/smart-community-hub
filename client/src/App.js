@@ -6,6 +6,7 @@ import NewsfeedPage from './pages/NewsfeedPage';
 import ProfilePage from './pages/ProfilePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import EventsPage from './pages/EventsPage'; // Import EventsPage
 
 const App = () => {
   const [isAuth, setAuth] = useState(false);
@@ -24,6 +25,7 @@ const App = () => {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/login" element={<LoginPage setAuth={setAuth} />} />
         <Route path="/register" element={<RegisterPage setAuth={setAuth} />} />
+        <Route path="/events" element={<EventsPage />} /> {/* Add route for EventsPage */}
       </Routes>
     </div>
   );
